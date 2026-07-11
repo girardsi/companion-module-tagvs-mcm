@@ -10,7 +10,7 @@ export async function CheckConnection(instance: ModuleInstance): Promise<void> {
 	}
 
 	try {
-		await fetchData.call(instance, '/devices/meta.json', 'GET')
+		await fetchData(instance, '/devices/meta.json', 'GET')
 	} catch (err) {
 		//if econnrefused, it is probably the wrong IP/Port or server is down
 		instance.updateStatus(InstanceStatus.UnknownError, 'Connection failed - check configuration')

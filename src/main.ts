@@ -39,7 +39,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.updateVariableDefinitions() // export variable definitions
 
 		this.updateStatus(InstanceStatus.Connecting) // Update the module status
-		await CheckConnection.call(this) // connect to the device
+		await CheckConnection(this) // connect to the device
 	}
 
 	// When module gets deleted
@@ -50,7 +50,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	async configUpdated(config: ModuleConfig, secrets: ModuleSecrets): Promise<void> {
 		this.config = config
 		this.secrets = secrets
-		await CheckConnection.call(this) // connect to the device
+		await CheckConnection(this) // connect to the device
 	}
 
 	// Return config fields for web config
