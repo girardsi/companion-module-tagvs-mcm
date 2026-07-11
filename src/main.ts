@@ -21,6 +21,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	config!: ModuleConfig // Setup in init()
 	secrets!: ModuleSecrets // Setup in init()
 
+	syncIntervalId: NodeJS.Timeout | undefined = undefined
+
+	channels: any[] = []
+
 	constructor(internal: unknown) {
 		super(internal)
 	}
@@ -29,13 +33,12 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.config = config
 		this.secrets = secrets
 
-		this.updateStatus(InstanceStatus.Connecting) // Update the module status
-
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updatePresets() // export Presets
 		this.updateVariableDefinitions() // export variable definitions
 
+		this.updateStatus(InstanceStatus.Connecting) // Update the module status
 		await CheckConnection.call(this) // connect to the device
 	}
 

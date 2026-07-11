@@ -4,7 +4,7 @@ export type ModuleConfig = {
 	ip: string
 	port: number
 	username: string
-	//password: string
+	syncInterval: number
 }
 
 export type ModuleSecrets = {
