@@ -1,15 +1,21 @@
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 
 export type ModuleConfig = {
-	host: string
+	ip: string
 	port: number
+	username: string
+	//password: string
+}
+
+export type ModuleSecrets = {
+	password: string
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
 	return [
 		{
 			type: 'textinput',
-			id: 'host',
+			id: 'ip',
 			label: 'Target IP',
 			width: 8,
 			regex: Regex.IP,
@@ -21,7 +27,21 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			width: 4,
 			min: 1,
 			max: 65535,
-			default: 8000,
+			default: 80,
+		},
+		{
+			type: 'textinput',
+			id: 'username',
+			label: 'Username',
+			width: 6,
+			default: '',
+		},
+		{
+			type: 'secret-text',
+			id: 'password',
+			label: 'Password',
+			width: 6,
+			default: '',
 		},
 	]
 }
