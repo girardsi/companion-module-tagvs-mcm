@@ -1,3 +1,3 @@
-## Your module
+## TAG Video Systems: MCM
 
-Write some help for your users here!
+Control settings, sources, profiles and threshold of MCM Multiviews servers with this module!

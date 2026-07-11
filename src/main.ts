@@ -33,6 +33,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.updatePresets() // export Presets
 		this.updateVariableDefinitions() // export variable definitions
 	}
+
 	// When module gets deleted
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
