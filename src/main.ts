@@ -37,6 +37,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.config = config
 		this.secrets = secrets
 
+		this.updateStatus(InstanceStatus.Connecting) // Update the module status
 		startSync(this, this.config.syncInterval) // start syncing with the device
 
 		const status = await CheckConnection(this) // connect to the device
@@ -48,8 +49,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.updateFeedbacks() // export feedbacks
 		this.updatePresets() // export Presets
 		this.updateVariableDefinitions() // export variable definitions
-
-		this.updateStatus(InstanceStatus.Connecting) // Update the module status
 	}
 
 	// When module gets deleted

@@ -5,7 +5,7 @@ export type VariablesSchema = {
 	device_name: string
 	device_id: number
 	device_ip_address: string
-	device_color: number
+	device_color: string
 
 	device_series: string
 	device_model: string
@@ -50,17 +50,21 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		device_active_output: { name: 'Device: Active outputs' },
 	})
 
-	self.setVariableValues({
-		device_name: JSON.stringify(self.deviceConfig.title),
-		device_id: Number(self.deviceConfig.id),
-		device_color: hexToRgb(JSON.stringify(self.deviceConfig.color)),
-		device_ip_address: JSON.stringify(self.deviceConfig.ip_address),
+	if (!self.deviceConfig) {
+		return
+	}
 
-		device_series: JSON.stringify(self.deviceConfig.series),
-		device_model: JSON.stringify(self.deviceConfig.model),
-		device_version: JSON.stringify(self.deviceConfig.version),
-		device_hardware: decodeCharCodes(JSON.stringify(self.deviceConfig.hardware_desc)),
-		device_capability: JSON.stringify(self.deviceConfig.capability_desc),
+	self.setVariableValues({
+		device_name: JSON.stringify(self.deviceConfig.title)?.replace(/"/g, ''),
+		device_id: Number(self.deviceConfig.id),
+		device_color: hexToRgb(String(JSON.stringify(self.deviceConfig.color))?.replace(/"/g, '')),
+		device_ip_address: JSON.stringify(self.deviceConfig.ip_address)?.replace(/"/g, ''),
+
+		device_series: JSON.stringify(self.deviceConfig.series)?.replace(/"/g, ''),
+		device_model: JSON.stringify(self.deviceConfig.model)?.replace(/"/g, ''),
+		device_version: JSON.stringify(self.deviceConfig.version)?.replace(/"/g, ''),
+		device_hardware: decodeCharCodes(JSON.stringify(self.deviceConfig.hardware_desc)?.replace(/"/g, '')),
+		device_capability: JSON.stringify(self.deviceConfig.capability_desc)?.replace(/"/g, ''),
 
 		device_usage_point: Number(self.deviceConfig.active_weight),
 		device_total_point: Number(self.deviceConfig.total_weight),
