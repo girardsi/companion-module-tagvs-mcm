@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
 	"type": "connection",
-	"id": "companion-module-tagvs-mcm",
+	"id": "girardsi/companion-module-tagvs-mcm",
 	"name": "companion-module-tagvs-mcm",
 	"shortname": "tagvs-mcm",
 	"description": "Module to Control TAG Video Systems MCM Servers via Companion",
