@@ -36,6 +36,11 @@ export async function fetchData(
 		return false
 	}
 
+	if (response.status === 404) {
+		instance.log('error', `${method} ${url} ${endpoint} failed: ${response.status} ${response.statusText}`.trim())
+		return false
+	}
+
 	if (!response.ok) {
 		const text = await response.text()
 		instance.log(

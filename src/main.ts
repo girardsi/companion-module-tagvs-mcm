@@ -6,6 +6,7 @@ import { UpdateActions, type ActionsSchema } from './actions.js'
 import { UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import { CheckConnection } from './api.js'
+import { startSync, stopSync } from './sync.js'
 
 export type ModuleSchema = {
 	config: ModuleConfig
@@ -24,6 +25,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	syncIntervalId: NodeJS.Timeout | undefined = undefined
 
 	channels: any[] = []
+	channelsDropdown: any[] = []
 
 	constructor(internal: unknown) {
 		super(internal)
@@ -40,6 +42,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 		this.updateStatus(InstanceStatus.Connecting) // Update the module status
 		await CheckConnection(this) // connect to the device
+
+		startSync(this, this.config.syncInterval) // start syncing with the device
 	}
 
 	// When module gets deleted
@@ -51,6 +55,9 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.config = config
 		this.secrets = secrets
 		await CheckConnection(this) // connect to the device
+
+		stopSync(this)
+		startSync(this, this.config.syncInterval)
 	}
 
 	// Return config fields for web config
