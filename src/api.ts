@@ -23,6 +23,17 @@ export async function CheckConnection(instance: ModuleInstance): Promise<boolean
 	}
 }
 
+export async function getDeviceConfig(instance: ModuleInstance): Promise<any> {
+	instance.log('debug', `Fetching Devices`)
+	const devices = await fetchData(instance, `/devices/.json`, 'GET')
+	for (const device of devices) {
+		if (device.Device.is_conected_device == 1) {
+			return device.Device
+		}
+	}
+	return false
+}
+
 export async function getAllChannels(instance: ModuleInstance): Promise<any> {
 	return await fetchData(instance, '/channels/config.json', 'GET')
 }
@@ -34,7 +45,7 @@ export async function getChannelStatistics(instance: ModuleInstance, channelId: 
 
 export async function enableChannel(instance: ModuleInstance, channelId: number): Promise<any> {
 	instance.log('debug', `Enabling channel ${channelId}`)
-	return await fetchData(instance, `/channels/command/monitor/${channelId}/.json`, 'GET')
+	return await fetchData(instance, `/channels/command/monitor/${channelId}//.json`, 'GET')
 }
 
 export async function disableChannel(instance: ModuleInstance, channelId: number): Promise<any> {
@@ -50,4 +61,47 @@ export async function enableSnooze(instance: ModuleInstance, channelId: number, 
 export async function disableSnooze(instance: ModuleInstance, channelId: number): Promise<any> {
 	instance.log('debug', `Disabling snooze for channel ${channelId}`)
 	return await fetchData(instance, `/channels/command/clearSnooze/${channelId}/.json`, 'GET')
+}
+
+export async function getAllEvents(instance: ModuleInstance): Promise<any> {
+	instance.log('debug', `Fetch all current events on the device`)
+	return await fetchData(instance, `/channels/events.json`, 'GET')
+}
+
+export async function getChannelEvents(instance: ModuleInstance, channelId: number): Promise<any> {
+	//instance.log('debug', `Fetch all current events on channel ${channelId}`)
+	const events = await getAllEvents(instance)
+
+	const channelEvents = []
+	for (const event of events) {
+		if (event.ChannelEvent.channel_source_id == channelId) {
+			channelEvents.push(event.ChannelEvent)
+		}
+	}
+	if (!channelEvents) {
+		return false
+	}
+
+	return channelEvents
+}
+
+/* // The call don't seems to work...
+export async function acknowledgeChannelEvents(instance: ModuleInstance, channelId: number): Promise<any> {
+    instance.log('debug', `Acknowledge all events on channel ${channelId}`)
+	return await fetchData(instance, `/channels/command/acknowledge/${channelId}.json`, 'POST')
+} */
+
+export async function acknowledgeChannelEvents(instance: ModuleInstance, channelId: number): Promise<any> {
+	instance.log('debug', `Acknowledge all events on channel ${channelId}`)
+	const channelEvents = await getChannelEvents(instance, channelId)
+
+	instance.log('debug', `No events to acknowledge on channel ${JSON.stringify(channelEvents)}`)
+	if (!channelEvents) {
+		return
+	}
+
+	for (const event of channelEvents) {
+		const res = await fetchData(instance, `/channels/command/acknowledge/${channelId}/${event.id}.json`, 'GET')
+		instance.log('debug', `${JSON.stringify(res)}`)
+	}
 }

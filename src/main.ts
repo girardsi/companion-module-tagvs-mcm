@@ -1,4 +1,4 @@
-import { InstanceBase, InstanceStatus, type SomeCompanionConfigField } from '@companion-module/base'
+import { InstanceBase, InstanceStatus, type JsonObject, type SomeCompanionConfigField } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig, type ModuleSecrets } from './config.js'
 import { UpdateVariableDefinitions, type VariablesSchema } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
@@ -27,6 +27,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	channels: any[] = []
 	channelsDropdown: any[] = []
 
+	deviceConfig: JsonObject = {}
+
 	constructor(internal: unknown) {
 		super(internal)
 	}
@@ -35,15 +37,19 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.config = config
 		this.secrets = secrets
 
+		startSync(this, this.config.syncInterval) // start syncing with the device
+
+		const status = await CheckConnection(this) // connect to the device
+		if (!status) {
+			return
+		}
+
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updatePresets() // export Presets
 		this.updateVariableDefinitions() // export variable definitions
 
 		this.updateStatus(InstanceStatus.Connecting) // Update the module status
-		await CheckConnection(this) // connect to the device
-
-		startSync(this, this.config.syncInterval) // start syncing with the device
 	}
 
 	// When module gets deleted

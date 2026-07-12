@@ -1,4 +1,4 @@
-import { disableChannel, disableSnooze, enableChannel, enableSnooze } from './api.js'
+import { acknowledgeChannelEvents, disableChannel, disableSnooze, enableChannel, enableSnooze } from './api.js'
 import type ModuleInstance from './main.js'
 import { syncData } from './sync.js'
 
@@ -36,6 +36,12 @@ export type ActionsSchema = {
 	}
 
 	unsnooze_channel: {
+		options: {
+			channel_id: number[]
+		}
+	}
+
+	channel_acknowledge_events: {
 		options: {
 			channel_id: number[]
 		}
@@ -198,6 +204,32 @@ export function UpdateActions(self: ModuleInstance): void {
 
 					self.checkFeedbacks('get_channel_status')
 				}
+			},
+		},
+
+		channel_acknowledge_events: {
+			name: 'Channel: Acknowledge events',
+			sortName: 'Channel: Aknowledge events',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel to acknowledge')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await acknowledgeChannelEvents(self, channelId)
+				}
+
+				self.checkFeedbacks('get_channel_status')
 			},
 		},
 	})
