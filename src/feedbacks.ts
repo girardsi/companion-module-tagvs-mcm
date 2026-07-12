@@ -133,7 +133,6 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 						self.log('error', `Unknown parameter: ${feedback.options.parameter}`)
 						return false
 				}
-				//clampValues: true, // If value is outside the min/max, clamp it to the min/max instead of rejecting the input
 			},
 		},
 	})

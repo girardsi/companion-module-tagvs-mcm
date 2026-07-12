@@ -1,4 +1,4 @@
-import { disableSnooze, enableSnooze } from './api.js'
+import { disableChannel, disableSnooze, enableChannel, enableSnooze } from './api.js'
 import type ModuleInstance from './main.js'
 import { syncData } from './sync.js'
 
@@ -13,6 +13,18 @@ export type ActionsSchema = {
 		options: {
 			channel_id: number[]
 			setting: string
+		}
+	}
+
+	enable_channel: {
+		options: {
+			channel_id: number[]
+		}
+	}
+
+	disable_channel: {
+		options: {
+			channel_id: number[]
 		}
 	}
 
@@ -72,6 +84,58 @@ export function UpdateActions(self: ModuleInstance): void {
 			],
 			callback: async (event) => {
 				console.log('Hello world!', event.options.channel_id)
+			},
+		},
+
+		enable_channel: {
+			name: 'Channel: Enable',
+			sortName: 'Channel: Enable 1',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected for enabling')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await enableChannel(self, channelId)
+
+					self.checkFeedbacks('get_channel_status')
+				}
+			},
+		},
+
+		disable_channel: {
+			name: 'Channel: Disable',
+			sortName: 'Channel: Enable 2',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected for disabling')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await disableChannel(self, channelId)
+
+					self.checkFeedbacks('get_channel_status')
+				}
 			},
 		},
 
