@@ -14,7 +14,7 @@ export function startSync(instance: ModuleInstance, interval = 5000): void {
 		})
 	}, interval)
 
-	await syncData(instance)
+	void syncData(instance)
 }
 
 export function stopSync(instance: ModuleInstance): void {
