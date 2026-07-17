@@ -1,6 +1,6 @@
 import { InstanceStatus } from '@companion-module/base'
 import type ModuleInstance from './main.js'
-import { fetchData } from './requests.js'
+import { fetchData, putData } from './requests.js'
 
 export async function CheckConnection(instance: ModuleInstance): Promise<boolean> {
 	if (!instance.config.ip || !instance.config.port || !instance.config.username || !instance.secrets.password) {
@@ -36,6 +36,28 @@ export async function getDeviceConfig(instance: ModuleInstance): Promise<any> {
 
 export async function getAllChannels(instance: ModuleInstance): Promise<any> {
 	return await fetchData(instance, '/channels/config.json', 'GET')
+}
+
+export async function getChannelConfig(instance: ModuleInstance, channelId: number): Promise<any> {
+	return await fetchData(instance, `/channels/config/${channelId}/.json`, 'GET')
+}
+
+export async function setChannelSetting(
+	instance: ModuleInstance,
+	channelId: number,
+	key: string,
+	value: string,
+): Promise<any> {
+	instance.log('debug', `put setting for channel ${channelId}`)
+	const channel = await getChannelConfig(instance, channelId)
+
+	if (!(key in channel.ChannelSource)) {
+		return
+	}
+
+	channel.ChannelSource[key] = value
+
+	return await putData(instance, `/channels/config/${channelId}/.json`, 'PUT', JSON.stringify(channel))
 }
 
 export async function getChannelStatistics(instance: ModuleInstance, channelId: number): Promise<any> {

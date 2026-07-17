@@ -1,4 +1,11 @@
-import { acknowledgeChannelEvents, disableChannel, disableSnooze, enableChannel, enableSnooze } from './api.js'
+import {
+	acknowledgeChannelEvents,
+	disableChannel,
+	disableSnooze,
+	enableChannel,
+	enableSnooze,
+	setChannelSetting,
+} from './api.js'
 import type ModuleInstance from './main.js'
 import { syncData } from './sync.js'
 
@@ -13,6 +20,7 @@ export type ActionsSchema = {
 		options: {
 			channel_id: number[]
 			setting: string
+			value: string
 		}
 	}
 
@@ -83,13 +91,62 @@ export function UpdateActions(self: ModuleInstance): void {
 					label: 'Setting',
 					default: '',
 					choices: [
-						{ id: 'profile_is', label: 'Profile' },
-						{ id: 'brightness', label: 'Brightness' },
+						{ id: 'access_type_id', label: 'Access Type ID' },
+						{ id: 'title', label: 'Title' },
+						{ id: 'uuid', label: 'UUID' },
+						{ id: 'network_id', label: 'Network ID' },
+						{ id: 'snooze_on_profile_change', label: 'Snooze On Profile Change' },
+						{ id: 'channel_source_pid_behavior_id', label: 'Channel Source PID Behavior ID' },
+						{ id: 'st2038_mode', label: 'ST-2038 Mode' },
+						{ id: 'tls_mode', label: 'TLS Mode' },
+						{ id: 'color_format_override_id', label: 'Color Format Override ID' },
+						{ id: 'roi_mode_id', label: 'ROI Mode ID' },
+						{ id: 'roi_config', label: 'ROI Config' },
+						{ id: 'roi_visualize', label: 'ROI Visualize' },
+						{ id: 'monitoring_level', label: 'Monitoring Level' },
+						{ id: 'audio_standard_type_id', label: 'Audio Standard Type ID' },
+						{ id: 'service_type_id', label: 'Service Type ID' },
+						{ id: 'standard_type_id', label: 'Standard Type ID' },
+						{ id: 'device_id', label: 'Device ID' },
+						{ id: 'is_record_enabled', label: 'Is Record Enabled' },
+						{ id: 'is_fingerprint_enabled', label: 'Is Fingerprint Enabled' },
+						{ id: 'is_descrambling_enabled', label: 'Is Descrambling Enabled' },
+						{ id: 't2mi_plp', label: 'T2-MI PLP' },
+						{ id: 'encryption_type_id', label: 'Encryption Type ID' },
+						{ id: 'encryption_constant_cw', label: 'Encryption Constant CW' },
+						{ id: 'parent_id', label: 'Parent ID' },
+						{ id: 'note', label: 'Note' },
+						{ id: 'tally_settings', label: 'Tally Settings' },
+						{ id: 'nielsen_reference', label: 'Nielsen Reference' },
+						{ id: 'kantar_reference', label: 'Kantar Reference' },
+						{ id: 'ssim_min', label: 'SSIM Min' },
+						{ id: 'ssim_max', label: 'SSIM Max' },
+						{ id: 'is_scheduling_enabled', label: 'Is Scheduling Enabled' },
+						{ id: 'cut_margin', label: 'Cut Margin' },
 					],
+				},
+				{
+					id: 'value',
+					type: 'textinput',
+					label: 'Value',
+					default: '',
 				},
 			],
 			callback: async (event) => {
-				console.log('Hello world!', event.options.channel_id)
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'Cant change setting, No channel selected')
+					return
+				}
+				if (!event.options.setting) {
+					self.log('error', 'No setting selected')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await setChannelSetting(self, channelId, event.options.setting, event.options.value)
+				}
+				void syncData(self)
+				//self.checkFeedbacks('get_channel_status')
 			},
 		},
 
