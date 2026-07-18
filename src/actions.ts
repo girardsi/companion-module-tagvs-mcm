@@ -4,6 +4,9 @@ import {
 	disableSnooze,
 	enableChannel,
 	enableSnooze,
+	forceChannelProfile,
+	forceChannelProfileByName,
+	releaseChannelProfile,
 	setChannelSetting,
 } from './api.js'
 import type ModuleInstance from './main.js'
@@ -50,6 +53,26 @@ export type ActionsSchema = {
 	}
 
 	channel_acknowledge_events: {
+		options: {
+			channel_id: number[]
+		}
+	}
+
+	channel_force_profile: {
+		options: {
+			channel_id: number[]
+			profile_id: number
+		}
+	}
+
+	channel_force_profile_by_name: {
+		options: {
+			channel_id: number[]
+			profile_name: string
+		}
+	}
+
+	channel_release_profile: {
 		options: {
 			channel_id: number[]
 		}
@@ -284,6 +307,108 @@ export function UpdateActions(self: ModuleInstance): void {
 
 				for (const channelId of event.options.channel_id) {
 					await acknowledgeChannelEvents(self, channelId)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
+		channel_force_profile: {
+			name: 'Channel: Force profile by ID',
+			sortName: 'Channel: Force profile 1',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+				{
+					id: 'profile_id',
+					type: 'number',
+					label: 'Profile ID',
+					default: 1,
+					min: 1,
+					max: 99999,
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected...')
+					return
+				}
+
+				if (!event.options.profile_id) {
+					self.log('error', 'No profile id entered... please enter a profile id')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await forceChannelProfile(self, channelId, event.options.profile_id)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
+		channel_force_profile_by_name: {
+			name: 'Channel: Force profile by name',
+			sortName: 'Channel: Force profile 2',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+				{
+					id: 'profile_name',
+					type: 'textinput',
+					label: 'Profile',
+					default: '',
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel to acknowledge')
+					return
+				}
+
+				if (!event.options.profile_name) {
+					self.log('error', 'No profile id entered... please enter a profile id')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await forceChannelProfileByName(self, channelId, event.options.profile_name)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
+		channel_release_profile: {
+			name: 'Channel: Release forced profile',
+			sortName: 'Channel: Force profile 3',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected.')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await releaseChannelProfile(self, channelId)
 				}
 
 				self.checkFeedbacks('get_channel_status')

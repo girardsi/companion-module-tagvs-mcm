@@ -127,3 +127,54 @@ export async function acknowledgeChannelEvents(instance: ModuleInstance, channel
 		instance.log('debug', `${JSON.stringify(res)}`)
 	}
 }
+
+export async function getChannelProfiles(instance: ModuleInstance, channelId: number): Promise<any> {
+	const channelStatistics = await getChannelStatistics(instance, channelId)
+
+	if (!channelStatistics.ChannelStatistics.ChannelProfile) {
+		return false
+	}
+
+	return channelStatistics.ChannelStatistics.ChannelProfile
+}
+
+export async function forceChannelProfileByName(
+	instance: ModuleInstance,
+	channelId: number,
+	profileName: string,
+): Promise<any> {
+	const channelProfiles = await getChannelProfiles(instance, channelId)
+
+	if (!channelProfiles) {
+		return false
+	}
+
+	let profileId = -1
+	for (const profile of channelProfiles) {
+		if (String(profile.title).includes(profileName)) {
+			profileId = profile.id
+			break
+		}
+	}
+
+	if (profileId == -1) {
+		instance.log('error', `Profile ${profileName} not found in channel ${channelId} profiles`)
+		return false
+	}
+
+	void forceChannelProfile(instance, channelId, profileId)
+}
+
+export async function forceChannelProfile(
+	instance: ModuleInstance,
+	channelId: number,
+	profileId: number,
+): Promise<any> {
+	instance.log('debug', `Force profile ${profileId} on channel ${channelId}`)
+	return await fetchData(instance, `/channels/command/forceProfile/${channelId}/${profileId}/.json`, 'GET')
+}
+
+export async function releaseChannelProfile(instance: ModuleInstance, channelId: number): Promise<any> {
+	instance.log('debug', `Release profile on channel ${channelId}`)
+	return await fetchData(instance, `/channels/command/forceProfile/${channelId}/0/.json`, 'GET')
+}
