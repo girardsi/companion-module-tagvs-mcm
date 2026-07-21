@@ -6,7 +6,7 @@ import {
 	enableChannel,
 	enableSnooze,
 	forceChannelProfile,
-	forceChannelProfileByName,
+	getChannelProfileIdByName,
 	releaseChannelProfile,
 	setChannelSetting,
 } from './api.js'
@@ -398,7 +398,12 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				for (const channelId of event.options.channel_id) {
-					await forceChannelProfileByName(self, channelId, event.options.profile_name)
+					const profileId = await getChannelProfileIdByName(self, channelId, event.options.profile_name)
+					if (!profileId) {
+						continue
+					}
+
+					void forceChannelProfile(self, channelId, profileId)
 				}
 
 				self.checkFeedbacks('get_channel_status')
@@ -424,7 +429,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				for (const channelId of event.options.channel_id) {
-					await releaseChannelProfile(self, channelId)
+					void releaseChannelProfile(self, channelId)
 				}
 
 				self.checkFeedbacks('get_channel_status')
