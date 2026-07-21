@@ -399,6 +399,7 @@ export function UpdateActions(self: ModuleInstance): void {
 
 				for (const channelId of event.options.channel_id) {
 					const profileId = await getChannelProfileIdByName(self, channelId, event.options.profile_name)
+
 					if (!profileId) {
 						continue
 					}
