@@ -195,7 +195,6 @@ export async function addChannelEventSchedule(
 	if (!channel.ChannelSource) {
 		return
 	}
-	instance.log('debug', 'lol')
 
 	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
 
