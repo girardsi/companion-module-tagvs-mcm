@@ -23,7 +23,8 @@
 		"yarn": "^4"
 	},
 	"dependencies": {
-		"@companion-module/base": "2.0.4"
+		"@companion-module/base": "2.0.4",
+		"chrono-node": "^2.10.0"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^3.0.1",

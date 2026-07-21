@@ -1,6 +1,7 @@
 import { InstanceStatus } from '@companion-module/base'
 import type ModuleInstance from './main.js'
 import { fetchData, putData } from './requests.js'
+import { daysToBinaryString, type Days } from './util.js'
 
 export async function CheckConnection(instance: ModuleInstance): Promise<boolean> {
 	if (!instance.config.ip || !instance.config.port || !instance.config.username || !instance.secrets.password) {
@@ -46,7 +47,7 @@ export async function setChannelSetting(
 	instance: ModuleInstance,
 	channelId: number,
 	key: string,
-	value: string,
+	value: string | any,
 ): Promise<any> {
 	instance.log('debug', `put setting for channel ${channelId}`)
 	const channel = await getChannelConfig(instance, channelId)
@@ -177,4 +178,43 @@ export async function forceChannelProfile(
 export async function releaseChannelProfile(instance: ModuleInstance, channelId: number): Promise<any> {
 	instance.log('debug', `Release profile on channel ${channelId}`)
 	return await fetchData(instance, `/channels/command/forceProfile/${channelId}/0/.json`, 'GET')
+}
+
+export async function addChannelEventSchedule(
+	instance: ModuleInstance,
+	channelId: number,
+	profileId: number,
+	eventName: string,
+	eventPriority: number,
+	eventStartTime: number,
+	eventDuration: number,
+	eventEndTime: number,
+	eventDays: Days[],
+): Promise<any> {
+	const channel = await getChannelConfig(instance, channelId)
+	if (!channel.ChannelSource) {
+		return
+	}
+	instance.log('debug', 'lol')
+
+	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+
+	for (const [i, profile] of profiles.entries()) {
+		if (profile.id != profileId) {
+			continue
+		}
+
+		const event: Record<string, any> = {
+			id: '',
+			priority: eventPriority,
+			start_utc: String(eventStartTime),
+			duration_millisecond: eventDuration,
+			days_of_week: daysToBinaryString(eventDays),
+			valid_until_utc: String(eventEndTime),
+			title: eventName,
+		}
+
+		Array.prototype.push.call(profiles[i].ProfileEvent, event)
+		return await setChannelSetting(instance, channelId, 'ChannelProfile', profiles)
+	}
 }

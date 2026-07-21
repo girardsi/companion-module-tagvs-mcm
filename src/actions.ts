@@ -1,5 +1,6 @@
 import {
 	acknowledgeChannelEvents,
+	addChannelEventSchedule,
 	disableChannel,
 	disableSnooze,
 	enableChannel,
@@ -11,6 +12,7 @@ import {
 } from './api.js'
 import type ModuleInstance from './main.js'
 import { syncData } from './sync.js'
+import { textToDurationMs, textToUnixTimeMs, type Days } from './util.js'
 
 export type ActionsSchema = {
 	sync_data: {
@@ -75,6 +77,20 @@ export type ActionsSchema = {
 	channel_release_profile: {
 		options: {
 			channel_id: number[]
+		}
+	}
+
+	channel_schedule_event: {
+		options: {
+			channel_id: number[]
+			profile_name: string
+			event_name: string
+			event_priority: number
+			static_text_1: string
+			event_start_time: string
+			event_duration: string
+			event_end_time: string
+			event_days: Days[]
 		}
 	}
 }
@@ -409,6 +425,102 @@ export function UpdateActions(self: ModuleInstance): void {
 
 				for (const channelId of event.options.channel_id) {
 					await releaseChannelProfile(self, channelId)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
+		channel_schedule_event: {
+			name: 'Channel: Schedule event',
+			sortName: 'Channel: Schedule event',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+				{
+					id: 'event_name',
+					type: 'textinput',
+					label: 'Event name',
+					default: '',
+				},
+				{
+					id: 'profile_name',
+					type: 'textinput',
+					label: 'Profile name',
+					default: '',
+				},
+				{
+					id: 'event_priority',
+					type: 'number',
+					label: 'Event Priority',
+					default: 98,
+					min: 1,
+					max: 99,
+				},
+				{
+					id: 'static_text_1',
+					type: 'static-text',
+					label: 'Time format',
+					value:
+						"Use natural declarative language to declare your time and duration for your event. (Ex: 'In 1 day and 1 hour', 'In 5 minutes', Duration: '1 hour and 5 minutes'.)",
+				},
+				{
+					id: 'event_start_time',
+					type: 'textinput',
+					label: 'Event start time',
+					default: 'In 1 hour',
+				},
+				{
+					id: 'event_duration',
+					type: 'textinput',
+					label: 'Event duration',
+					default: '1 hour',
+				},
+				{
+					id: 'event_end_time',
+					type: 'textinput',
+					label: 'Repeat event until',
+					default: 'In 12 hours',
+				},
+				{
+					id: 'event_days',
+					type: 'multidropdown',
+					label: 'Schedule event on days',
+					default: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+					choices: [
+						{ id: 'sunday', label: 'Sunday' },
+						{ id: 'monday', label: 'Monday' },
+						{ id: 'tuesday', label: 'Tuesday' },
+						{ id: 'wednesday', label: 'Wednesday' },
+						{ id: 'thursday', label: 'Thursday' },
+						{ id: 'friday', label: 'Friday' },
+						{ id: 'saturday', label: 'Saturday' },
+					],
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected.')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await addChannelEventSchedule(
+						self,
+						channelId,
+						Number(event.options.profile_name),
+						event.options.event_name,
+						event.options.event_priority,
+						textToUnixTimeMs(event.options.event_start_time) || 0,
+						textToDurationMs(event.options.event_duration) || 0,
+						textToUnixTimeMs(event.options.event_end_time) || 0,
+						event.options.event_days,
+					)
 				}
 
 				self.checkFeedbacks('get_channel_status')
