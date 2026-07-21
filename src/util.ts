@@ -56,6 +56,7 @@ export function daysToBinaryString(daysToParse: Days[]): string {
 	and 0 if the day is not here. 
 	
 	All in order of the days from sunday to saturday.
+	Needed for MCM Event scheduling 
 	******************************************************/
 
 	const allDays: Days[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
