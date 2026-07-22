@@ -8,6 +8,7 @@ import {
 	forceChannelProfile,
 	getChannelProfileId,
 	releaseChannelProfile,
+	removeChannelEventSchedule,
 	setChannelSetting,
 } from './api.js'
 import type ModuleInstance from './main.js'
@@ -91,6 +92,13 @@ export type ActionsSchema = {
 			event_duration: string
 			event_end_time: string
 			event_days: Days[]
+		}
+	}
+
+	channel_remove_event: {
+		options: {
+			channel_id: number[]
+			event_name: string
 		}
 	}
 }
@@ -519,7 +527,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					await addChannelEventSchedule(
 						self,
 						channelId,
-						Number(event.options.profile_name),
+						await getChannelProfileId(self, channelId, event.options.profile_name),
 						event.options.event_name,
 						event.options.event_priority,
 						textToUnixTimeMs(event.options.event_start_time) || 0,
@@ -527,6 +535,38 @@ export function UpdateActions(self: ModuleInstance): void {
 						textToUnixTimeMs(event.options.event_end_time) || 0,
 						event.options.event_days,
 					)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
+		channel_remove_event: {
+			name: 'Channel: Remove event',
+			sortName: 'Channel: Schedule event 2',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+				{
+					id: 'event_name',
+					type: 'textinput',
+					label: 'Event name',
+					default: '',
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected.')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await removeChannelEventSchedule(self, channelId, event.options.event_name)
 				}
 
 				self.checkFeedbacks('get_channel_status')

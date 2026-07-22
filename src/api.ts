@@ -143,11 +143,11 @@ export async function getChannelProfileId(
 	instance: ModuleInstance,
 	channelId: number,
 	profileName: string,
-): Promise<any> {
+): Promise<number> {
 	const channelProfiles = await getChannelProfiles(instance, channelId)
 
 	if (!channelProfiles) {
-		return false
+		return -1
 	}
 
 	let profileId = -1
@@ -160,7 +160,7 @@ export async function getChannelProfileId(
 
 	if (profileId == -1) {
 		instance.log('error', `Profile ${profileName} not found in channel ${channelId} profiles`)
-		return false
+		return -1
 	}
 
 	return profileId
@@ -216,4 +216,24 @@ export async function addChannelEventSchedule(
 		Array.prototype.push.call(profiles[i].ProfileEvent, event)
 		return await setChannelSetting(instance, channelId, 'ChannelProfile', profiles)
 	}
+}
+
+export async function removeChannelEventSchedule(
+	instance: ModuleInstance,
+	channelId: number,
+	eventName: string,
+): Promise<any> {
+	const channel = await getChannelConfig(instance, channelId)
+	if (!channel.ChannelSource) {
+		return
+	}
+
+	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+
+	const newProfiles = profiles.map((profile) => ({
+		...profile,
+		ProfileEvent: profile.ProfileEvent.filter((event: any) => event.title !== eventName),
+	}))
+
+	return await setChannelSetting(instance, channelId, 'ChannelProfile', newProfiles)
 }
