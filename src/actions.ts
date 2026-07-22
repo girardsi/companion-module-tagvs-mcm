@@ -6,7 +6,7 @@ import {
 	enableChannel,
 	enableSnooze,
 	forceChannelProfile,
-	getChannelProfileIdByName,
+	getChannelProfileId,
 	releaseChannelProfile,
 	setChannelSetting,
 } from './api.js'
@@ -398,7 +398,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				for (const channelId of event.options.channel_id) {
-					const profileId = await getChannelProfileIdByName(self, channelId, event.options.profile_name)
+					const profileId = await getChannelProfileId(self, channelId, event.options.profile_name)
 
 					if (!profileId) {
 						continue

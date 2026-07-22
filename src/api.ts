@@ -139,7 +139,7 @@ export async function getChannelProfiles(instance: ModuleInstance, channelId: nu
 	return channelStatistics.ChannelStatistics.ChannelProfile
 }
 
-export async function getChannelProfileIdByName(
+export async function getChannelProfileId(
 	instance: ModuleInstance,
 	channelId: number,
 	profileName: string,
