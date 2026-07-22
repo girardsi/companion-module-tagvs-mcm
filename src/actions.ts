@@ -6,6 +6,7 @@ import {
 	enableChannel,
 	enableSnooze,
 	forceChannelProfile,
+	getChannelEventScheduleId,
 	getChannelProfileId,
 	releaseChannelProfile,
 	removeChannelEventSchedule,
@@ -566,7 +567,11 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				for (const channelId of event.options.channel_id) {
-					await removeChannelEventSchedule(self, channelId, event.options.event_name)
+					await removeChannelEventSchedule(
+						self,
+						channelId,
+						await getChannelEventScheduleId(self, channelId, event.options.event_name),
+					)
 				}
 
 				self.checkFeedbacks('get_channel_status')

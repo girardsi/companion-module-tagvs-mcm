@@ -180,6 +180,23 @@ export async function releaseChannelProfile(instance: ModuleInstance, channelId:
 	return await fetchData(instance, `/channels/command/forceProfile/${channelId}/0/.json`, 'GET')
 }
 
+export async function getChannelEventScheduleId(
+	instance: ModuleInstance,
+	channelId: number,
+	eventName: string,
+): Promise<number | number[]> {
+	const channel = await getChannelConfig(instance, channelId)
+	if (!channel.ChannelSource) {
+		return -1
+	}
+
+	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+
+	return profiles.flatMap((profile) =>
+		profile.ProfileEvents.filter((event: any) => event.name == eventName).map((event: any) => event.id),
+	)
+}
+
 export async function addChannelEventSchedule(
 	instance: ModuleInstance,
 	channelId: number,
@@ -221,7 +238,7 @@ export async function addChannelEventSchedule(
 export async function removeChannelEventSchedule(
 	instance: ModuleInstance,
 	channelId: number,
-	eventName: string,
+	eventId: number | number[],
 ): Promise<any> {
 	const channel = await getChannelConfig(instance, channelId)
 	if (!channel.ChannelSource) {
@@ -229,10 +246,11 @@ export async function removeChannelEventSchedule(
 	}
 
 	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+	const eventIdList = Array.isArray(eventId) ? eventId : [eventId]
 
 	const newProfiles = profiles.map((profile) => ({
 		...profile,
-		ProfileEvent: profile.ProfileEvent.filter((event: any) => event.title !== eventName),
+		ProfileEvent: profile.ProfileEvent.filter((event: any) => !eventIdList.includes(event.id)),
 	}))
 
 	return await setChannelSetting(instance, channelId, 'ChannelProfile', newProfiles)
