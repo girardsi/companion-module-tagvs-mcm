@@ -567,6 +567,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				for (const channelId of event.options.channel_id) {
+					self.log('debug', String(await getChannelEventScheduleId(self, channelId, event.options.event_name)))
 					await removeChannelEventSchedule(
 						self,
 						channelId,

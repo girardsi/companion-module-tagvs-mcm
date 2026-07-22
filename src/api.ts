@@ -193,7 +193,7 @@ export async function getChannelEventScheduleId(
 	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
 
 	return profiles.flatMap((profile) =>
-		profile.ProfileEvents.filter((event: any) => event.name == eventName).map((event: any) => event.id),
+		profile.ProfileEvent.filter((event: any) => event.title == eventName).map((event: any) => event.id),
 	)
 }
 
