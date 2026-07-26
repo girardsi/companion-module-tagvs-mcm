@@ -6,6 +6,7 @@ export async function fetchData(
 	//verbose: boolean = true, // log request and errors, but only if instance.config.verbose - used to keep the polling quiet
 	endpoint: string,
 	method: string = 'GET',
+	wantToUpdateStatus = false,
 ): Promise<any> {
 	const url = `http://${instance.config.ip}:${instance.config.port}/api/2.0${endpoint}`
 
@@ -50,7 +51,10 @@ export async function fetchData(
 		throw new Error(`${method} ${endpoint} failed: ${response.status}`)
 	}
 
-	instance.updateStatus(InstanceStatus.Ok, 'Connection successful')
+	instance.log('debug', `${method}: ${url} - ${response.status}`)
+	if (wantToUpdateStatus) {
+		instance.updateStatus(InstanceStatus.Ok, 'Connection successful')
+	}
 
 	const json = await response.json()
 	//if (instance.config.verbose) instance.log('debug', `Response: ${JSON.stringify(json)}`)

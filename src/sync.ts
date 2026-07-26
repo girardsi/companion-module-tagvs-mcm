@@ -34,7 +34,7 @@ export async function syncData(instance: ModuleInstance): Promise<void> {
 			return
 		}
 		// Fetching data
-		const channels = await fetchData(instance, '/channels/config.json', 'GET')
+		const channels = await fetchData(instance, '/channels/config.json', 'GET', true)
 		const deviceConfig = await getDeviceConfig(instance)
 
 		// Error handling

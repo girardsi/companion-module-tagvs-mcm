@@ -3,6 +3,9 @@ import type ModuleInstance from './main.js'
 import { fetchData, putData } from './requests.js'
 import { daysToBinaryString, type Days } from './util.js'
 
+/********************************************** 
+					Device
+***********************************************/
 export async function CheckConnection(instance: ModuleInstance): Promise<boolean> {
 	if (!instance.config.ip || !instance.config.port || !instance.config.username || !instance.secrets.password) {
 		instance.updateStatus(InstanceStatus.BadConfig, 'Missing configuration: IP, port, username, or password')
@@ -11,7 +14,7 @@ export async function CheckConnection(instance: ModuleInstance): Promise<boolean
 	}
 
 	try {
-		const status = await fetchData(instance, '/devices/meta.json', 'GET')
+		const status = await fetchData(instance, '/devices/meta.json', 'GET', true)
 		if (!status) {
 			return false
 		}
@@ -35,37 +38,58 @@ export async function getDeviceConfig(instance: ModuleInstance): Promise<any> {
 	return false
 }
 
+/********************************************** 
+				Channel: Config
+***********************************************/
 export async function getAllChannels(instance: ModuleInstance): Promise<any> {
 	return await fetchData(instance, '/channels/config.json', 'GET')
 }
 
 export async function getChannelConfig(instance: ModuleInstance, channelId: number): Promise<any> {
-	return await fetchData(instance, `/channels/config/${channelId}/.json`, 'GET')
+	const channel = await fetchData(instance, `/channels/config/${channelId}/.json`, 'GET')
+
+	if (!channel.ChannelSource) {
+		instance.log('error', `Cannot get the config of channel ID: '${channelId}'. Channel not found...`)
+		return
+	}
+	return channel.ChannelSource
 }
 
 export async function setChannelSetting(
 	instance: ModuleInstance,
 	channelId: number,
-	key: string,
-	value: string | any,
+	key: string, //Key of the setting
+	value: string | any, // Value to set
 ): Promise<any> {
-	instance.log('debug', `put setting for channel ${channelId}`)
 	const channel = await getChannelConfig(instance, channelId)
-
-	if (!(key in channel.ChannelSource)) {
+	if (!channel) {
 		return
 	}
 
-	channel.ChannelSource[key] = value
+	if (!(key in channel)) {
+		// Handling incorrect key error
+		instance.log(
+			'error',
+			`Cannot set ${key} to ${JSON.stringify(value)} on channel '${channelId}'. Key dosen't exist...`,
+		)
+		return
+	}
 
-	return await putData(instance, `/channels/config/${channelId}/.json`, 'PUT', JSON.stringify(channel))
+	instance.log('info', `Set ${key} to ${value} on channel '${channel.title}'.`)
+
+	// Set value on the array
+	channel[key] = value
+	return await putData(
+		instance,
+		`/channels/config/${channelId}/.json`,
+		'PUT',
+		JSON.stringify({ ChannelSource: channel }),
+	)
 }
 
-export async function getChannelStatistics(instance: ModuleInstance, channelId: number): Promise<any> {
-	instance.log('debug', `Fetching statistics for channel ${channelId}`)
-	return await fetchData(instance, `/channels/statistics/${channelId}.json`, 'GET')
-}
-
+/********************************************** 
+				Channel: Commands
+***********************************************/
 export async function enableChannel(instance: ModuleInstance, channelId: number): Promise<any> {
 	instance.log('debug', `Enabling channel ${channelId}`)
 	return await fetchData(instance, `/channels/command/monitor/${channelId}//.json`, 'GET')
@@ -84,6 +108,29 @@ export async function enableSnooze(instance: ModuleInstance, channelId: number, 
 export async function disableSnooze(instance: ModuleInstance, channelId: number): Promise<any> {
 	instance.log('debug', `Disabling snooze for channel ${channelId}`)
 	return await fetchData(instance, `/channels/command/clearSnooze/${channelId}/.json`, 'GET')
+}
+
+export async function getChannelStatistics(instance: ModuleInstance, channelId: number): Promise<any> {
+	instance.log('debug', `Fetching statistics for channel ${channelId}`)
+	return await fetchData(instance, `/channels/statistics/${channelId}.json`, 'GET')
+}
+
+/********************************************** 
+		Channel: Event Acknowledging
+***********************************************/
+export async function acknowledgeChannelEvents(instance: ModuleInstance, channelId: number): Promise<any> {
+	instance.log('debug', `Acknowledge all events on channel ${channelId}`)
+	const channelEvents = await getChannelEvents(instance, channelId)
+
+	instance.log('debug', `No events to acknowledge on channel ${JSON.stringify(channelEvents)}`)
+	if (!channelEvents) {
+		return
+	}
+
+	for (const event of channelEvents) {
+		const res = await fetchData(instance, `/channels/command/acknowledge/${channelId}/${event.id}.json`, 'GET')
+		instance.log('debug', `${JSON.stringify(res)}`)
+	}
 }
 
 export async function getAllEvents(instance: ModuleInstance): Promise<any> {
@@ -114,24 +161,37 @@ export async function acknowledgeChannelEvents(instance: ModuleInstance, channel
 	return await fetchData(instance, `/channels/command/acknowledge/${channelId}.json`, 'POST')
 } */
 
-export async function acknowledgeChannelEvents(instance: ModuleInstance, channelId: number): Promise<any> {
-	instance.log('debug', `Acknowledge all events on channel ${channelId}`)
-	const channelEvents = await getChannelEvents(instance, channelId)
-
-	instance.log('debug', `No events to acknowledge on channel ${JSON.stringify(channelEvents)}`)
-	if (!channelEvents) {
-		return
+/********************************************** 
+				Channel: Profile 
+***********************************************/
+export async function getChannelProfileId(
+	instance: ModuleInstance,
+	channelId: number,
+	profileName: string,
+): Promise<number> {
+	const channelProfiles = await getChannelProfiles(instance, channelId)
+	if (!channelProfiles) {
+		return -1
 	}
 
-	for (const event of channelEvents) {
-		const res = await fetchData(instance, `/channels/command/acknowledge/${channelId}/${event.id}.json`, 'GET')
-		instance.log('debug', `${JSON.stringify(res)}`)
+	let profileId = -1
+	for (const profile of channelProfiles) {
+		if (String(profile.title).includes(profileName)) {
+			profileId = profile.id
+			break
+		}
 	}
+
+	if (profileId == -1) {
+		instance.log('error', `Profile ${profileName} not found in channel ${channelId} profiles`)
+		return -1
+	}
+
+	return profileId
 }
 
 export async function getChannelProfilesStatistics(instance: ModuleInstance, channelId: number): Promise<any> {
 	const channelStatistics = await getChannelStatistics(instance, channelId)
-
 	if (!channelStatistics.ChannelStatistics.ChannelProfile) {
 		return false
 	}
@@ -141,12 +201,11 @@ export async function getChannelProfilesStatistics(instance: ModuleInstance, cha
 
 export async function getChannelProfiles(instance: ModuleInstance, channelId: number): Promise<any> {
 	const channelStatistics = await getChannelConfig(instance, channelId)
-
-	if (!channelStatistics.ChannelSource.ChannelProfile) {
+	if (!channelStatistics.ChannelProfile) {
 		return false
 	}
 
-	return channelStatistics.ChannelSource.ChannelProfile
+	return channelStatistics.ChannelProfile
 }
 
 export async function addChannelProfile(
@@ -186,33 +245,6 @@ export async function removeChannelProfile(
 	return await setChannelSetting(instance, channelId, 'ChannelProfile', newProfiles)
 }
 
-export async function getChannelProfileId(
-	instance: ModuleInstance,
-	channelId: number,
-	profileName: string,
-): Promise<number> {
-	const channelProfiles = await getChannelProfiles(instance, channelId)
-
-	if (!channelProfiles) {
-		return -1
-	}
-
-	let profileId = -1
-	for (const profile of channelProfiles) {
-		if (String(profile.title).includes(profileName)) {
-			profileId = profile.id
-			break
-		}
-	}
-
-	if (profileId == -1) {
-		instance.log('error', `Profile ${profileName} not found in channel ${channelId} profiles`)
-		return -1
-	}
-
-	return profileId
-}
-
 export async function forceChannelProfile(
 	instance: ModuleInstance,
 	channelId: number,
@@ -227,17 +259,21 @@ export async function releaseChannelProfile(instance: ModuleInstance, channelId:
 	return await fetchData(instance, `/channels/command/forceProfile/${channelId}/0/.json`, 'GET')
 }
 
+/********************************************** 
+			Channel: Event Schedule
+***********************************************/
+
 export async function getChannelEventScheduleId(
 	instance: ModuleInstance,
 	channelId: number,
 	eventName: string,
 ): Promise<number | number[]> {
 	const channel = await getChannelConfig(instance, channelId)
-	if (!channel.ChannelSource) {
+	if (!channel) {
 		return -1
 	}
 
-	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+	const profiles: Array<any> = channel.ChannelProfile
 
 	return profiles.flatMap((profile) =>
 		profile.ProfileEvent.filter((event: any) => event.title == eventName).map((event: any) => event.id),
@@ -256,11 +292,11 @@ export async function addChannelEventSchedule(
 	eventDays: Days[],
 ): Promise<any> {
 	const channel = await getChannelConfig(instance, channelId)
-	if (!channel.ChannelSource) {
+	if (!channel) {
 		return
 	}
 
-	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+	const profiles: Array<any> = channel.ChannelProfile
 
 	for (const [i, profile] of profiles.entries()) {
 		if (profile.id != profileId) {
@@ -288,11 +324,11 @@ export async function removeChannelEventSchedule(
 	eventId: number | number[],
 ): Promise<any> {
 	const channel = await getChannelConfig(instance, channelId)
-	if (!channel.ChannelSource) {
+	if (!channel) {
 		return
 	}
 
-	const profiles: Array<any> = channel.ChannelSource.ChannelProfile
+	const profiles: Array<any> = channel.ChannelProfile
 	const eventIdList = Array.isArray(eventId) ? eventId : [eventId]
 
 	const newProfiles = profiles.map((profile) => ({
