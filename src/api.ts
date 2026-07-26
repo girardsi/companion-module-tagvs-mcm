@@ -129,7 +129,7 @@ export async function acknowledgeChannelEvents(instance: ModuleInstance, channel
 	}
 }
 
-export async function getChannelProfiles(instance: ModuleInstance, channelId: number): Promise<any> {
+export async function getChannelProfilesStatistics(instance: ModuleInstance, channelId: number): Promise<any> {
 	const channelStatistics = await getChannelStatistics(instance, channelId)
 
 	if (!channelStatistics.ChannelStatistics.ChannelProfile) {
@@ -137,6 +137,53 @@ export async function getChannelProfiles(instance: ModuleInstance, channelId: nu
 	}
 
 	return channelStatistics.ChannelStatistics.ChannelProfile
+}
+
+export async function getChannelProfiles(instance: ModuleInstance, channelId: number): Promise<any> {
+	const channelStatistics = await getChannelConfig(instance, channelId)
+
+	if (!channelStatistics.ChannelSource.ChannelProfile) {
+		return false
+	}
+
+	return channelStatistics.ChannelSource.ChannelProfile
+}
+
+export async function addChannelProfile(
+	instance: ModuleInstance,
+	channelId: number,
+	profileName: string,
+	notificationsSetId?: number,
+	eventRuleSetId?: number,
+	titleColorId?: number,
+	borderColorId?: number,
+): Promise<any> {
+	const profiles = await getChannelProfiles(instance, channelId)
+	const newProfile = {
+		...profiles[0],
+		id: '',
+		is_default: 0,
+		ProfileEvent: [],
+		title: profileName,
+		notification_set_id: notificationsSetId ?? Number(profiles[0].notification_set_id),
+		event_rule_set_id: eventRuleSetId ?? profiles[0].event_rule_set_id,
+		title_color_id: titleColorId ?? profiles[0].title_color_id,
+		border_color_id: borderColorId ?? profiles[0].border_color_id,
+	}
+
+	const newProfileList = [...profiles, newProfile]
+	return await setChannelSetting(instance, channelId, 'ChannelProfile', newProfileList)
+}
+
+export async function removeChannelProfile(
+	instance: ModuleInstance,
+	channelId: number,
+	profileId: number,
+): Promise<any> {
+	const profiles = await getChannelProfiles(instance, channelId)
+	const newProfiles = profiles.filter((profile: any) => profile.id !== profileId)
+
+	return await setChannelSetting(instance, channelId, 'ChannelProfile', newProfiles)
 }
 
 export async function getChannelProfileId(

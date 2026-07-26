@@ -1,6 +1,7 @@
 import {
 	acknowledgeChannelEvents,
 	addChannelEventSchedule,
+	addChannelProfile,
 	disableChannel,
 	disableSnooze,
 	enableChannel,
@@ -10,6 +11,7 @@ import {
 	getChannelProfileId,
 	releaseChannelProfile,
 	removeChannelEventSchedule,
+	removeChannelProfile,
 	setChannelSetting,
 } from './api.js'
 import type ModuleInstance from './main.js'
@@ -59,6 +61,24 @@ export type ActionsSchema = {
 	channel_acknowledge_events: {
 		options: {
 			channel_id: number[]
+		}
+	}
+
+	channel_create_profile: {
+		options: {
+			channel_id: number[]
+			profile_name: string
+			event_rule_set: string
+			notification_set: string
+			title_color_id: number
+			border_color_id: number
+		}
+	}
+
+	channel_remove_profile: {
+		options: {
+			channel_id: number[]
+			profile_name: string
 		}
 	}
 
@@ -338,9 +358,132 @@ export function UpdateActions(self: ModuleInstance): void {
 			},
 		},
 
+		channel_create_profile: {
+			name: 'Channel: Create profile',
+			sortName: 'Channel: Profile 1',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+				{
+					id: 'profile_name',
+					type: 'textinput',
+					label: 'Profile name',
+					default: '',
+				},
+				{
+					id: 'event_rule_set',
+					type: 'textinput',
+					label: 'Thresholds set name (Optional)',
+				},
+				{
+					id: 'notification_set',
+					type: 'textinput',
+					label: 'Notifications set name (Optional)',
+				},
+				{
+					id: 'title_color_id',
+					type: 'dropdown',
+					label: 'Title color',
+					default: '0',
+					choices: [
+						{ id: '0', label: 'Default' },
+						{ id: '1', label: 'Red' },
+						{ id: '2', label: 'Blue' },
+						{ id: '3', label: 'Green' },
+						{ id: '4', label: 'Orange' },
+						{ id: '5', label: 'Yellow' },
+						{ id: '6', label: 'Light Blue' },
+						{ id: '7', label: 'Light Green' },
+						{ id: '8', label: 'Pink' },
+						{ id: '9', label: 'Black' },
+						{ id: '10', label: 'White' },
+					],
+				},
+				{
+					id: 'border_color_id',
+					type: 'dropdown',
+					label: 'Border color',
+					default: '0',
+					choices: [
+						{ id: '0', label: 'Default' },
+						{ id: '1', label: 'Red' },
+						{ id: '2', label: 'Blue' },
+						{ id: '3', label: 'Green' },
+						{ id: '4', label: 'Orange' },
+						{ id: '5', label: 'Yellow' },
+						{ id: '6', label: 'Light Blue' },
+						{ id: '7', label: 'Light Green' },
+						{ id: '8', label: 'Pink' },
+						{ id: '9', label: 'Black' },
+						{ id: '10', label: 'White' },
+					],
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel selected.')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					await addChannelProfile(self, channelId, event.options.profile_name)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
+		channel_remove_profile: {
+			name: 'Channel: Remove profile',
+			sortName: 'Channel: Profile 1.2',
+			options: [
+				{
+					id: 'channel_id',
+					type: 'multidropdown',
+					label: 'Channel',
+					default: [],
+					choices: self.channelsDropdown,
+				},
+				{
+					id: 'profile_name',
+					type: 'textinput',
+					label: 'Profile name',
+					default: '',
+				},
+			],
+			callback: async (event) => {
+				if (!event.options.channel_id || event.options.channel_id.length === 0) {
+					self.log('error', 'No channel to acknowledge')
+					return
+				}
+
+				if (!event.options.profile_name) {
+					self.log('error', 'No profile name entered... please enter a profile name')
+					return
+				}
+
+				for (const channelId of event.options.channel_id) {
+					const profileId = await getChannelProfileId(self, channelId, event.options.profile_name)
+
+					if (profileId == -1) {
+						continue
+					}
+
+					void removeChannelProfile(self, channelId, profileId)
+				}
+
+				self.checkFeedbacks('get_channel_status')
+			},
+		},
+
 		channel_force_profile: {
 			name: 'Channel: Force profile by ID',
-			sortName: 'Channel: Force profile 1',
+			sortName: 'Channel: Profile 2',
 			options: [
 				{
 					id: 'channel_id',
@@ -379,7 +522,7 @@ export function UpdateActions(self: ModuleInstance): void {
 
 		channel_force_profile_by_name: {
 			name: 'Channel: Force profile by name',
-			sortName: 'Channel: Force profile 2',
+			sortName: 'Channel: Profile 3',
 			options: [
 				{
 					id: 'channel_id',
@@ -422,7 +565,7 @@ export function UpdateActions(self: ModuleInstance): void {
 
 		channel_release_profile: {
 			name: 'Channel: Release forced profile',
-			sortName: 'Channel: Force profile 3',
+			sortName: 'Channel: Profile 4',
 			options: [
 				{
 					id: 'channel_id',
