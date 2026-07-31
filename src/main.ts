@@ -7,6 +7,7 @@ import { UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import { CheckConnection } from './api.js'
 import { startSync, stopSync } from './sync.js'
+import type { ChannelSource } from './types.js'
 
 export type ModuleSchema = {
 	config: ModuleConfig
@@ -24,7 +25,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	syncIntervalId: NodeJS.Timeout | undefined = undefined
 
-	channels: any[] = []
+	channels: ChannelSource[] = []
 	channelsDropdown: any[] = []
 
 	deviceConfig: JsonObject = {}

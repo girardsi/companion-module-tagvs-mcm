@@ -4,11 +4,11 @@
 
 // Under ChannelSource
 export interface ProfileEvent {
-	id: number
+	id: number | ''
 	priority: number
 	start_utc: string
 	duration_millisecond: number
-	days_of_week: number
+	days_of_week: string
 	valid_until_utc: string
 	title: string
 }
@@ -22,7 +22,7 @@ export interface PidAttribute {
 
 // Under ChannelSource / ChannelProfile
 export interface ProfilePid {
-	id: number
+	id: number | ''
 	pid: number
 	pid_content_type_id: number
 	is_enabled?: 0 | 1
@@ -39,7 +39,7 @@ export interface ProfilePid {
 
 // Under ChannelSource
 export interface ChannelProfile {
-	id: number
+	id: number | ''
 	title: string
 	notification_set_id: number
 	event_rule_set_id: number

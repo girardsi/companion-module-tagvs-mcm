@@ -1,7 +1,7 @@
 import {
 	acknowledgeChannelEvents,
 	addChannelEventSchedule,
-	addChannelProfile,
+	createChannelProfile,
 	disableChannel,
 	disableSnooze,
 	enableChannel,
@@ -431,7 +431,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				for (const channelId of event.options.channel_id) {
-					await addChannelProfile(self, channelId, event.options.profile_name)
+					await createChannelProfile(self, channelId, event.options.profile_name)
 				}
 
 				self.checkFeedbacks('get_channel_status')
