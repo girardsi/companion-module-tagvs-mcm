@@ -230,7 +230,7 @@ export async function getChannelProfileId(
 	instance: ModuleInstance,
 	channelId: ChannelSource['id'],
 	profileName: string,
-): Promise<number> {
+): Promise<ChannelProfile['id']> {
 	if (!isChannelExist) {
 		instance.log('error', `Can't get profile ID of '${profileName}' in channel '${channelId}'. Channel not found`)
 		return -1
@@ -362,7 +362,7 @@ export async function forceChannelProfile(
 export async function releaseChannelProfile(instance: ModuleInstance, channelId: ChannelSource['id']): Promise<any> {
 	instance.log(
 		'info',
-		`Release forced profile on channel '${await etChannelName(instance, channelId)}' (ID: ${channelId})`,
+		`Release forced profile on channel '${await getChannelName(instance, channelId)}' (ID: ${channelId})`,
 	)
 	return await fetchData(instance, `/channels/command/forceProfile/${channelId}/0/.json`, 'GET')
 }
